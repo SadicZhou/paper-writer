@@ -1,0 +1,389 @@
+{
+  "paperId": "基于深度学习的自然语言处理研究",
+  "title": "基于深度学习的自然语言处理研究",
+  "sections": [
+    {
+      "id": "intro",
+      "number": "1",
+      "title": "绪论",
+      "type": "introduction",
+      "wordCount": 2000,
+      "status": "planned",
+      "children": [
+        {
+          "id": "intro-bg",
+          "number": "1.1",
+          "title": "研究背景",
+          "type": "introduction",
+          "wordCount": 600,
+          "status": "planned",
+          "parentId": "intro",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg1",
+              "claim": "自然语言处理是人工智能的核心领域，深度学习推动了其快速发展",
+              "evidence": "NLP应用广泛，如机器翻译、情感分析等",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "intro-purpose",
+          "number": "1.2",
+          "title": "研究目的与意义",
+          "type": "introduction",
+          "wordCount": 500,
+          "status": "planned",
+          "parentId": "intro",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg2",
+              "claim": "本研究旨在探索深度学习在NLP任务中的优化方法",
+              "evidence": "通过模型改进提升文本分类准确率",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "intro-method",
+          "number": "1.3",
+          "title": "研究方法与创新点",
+          "type": "introduction",
+          "wordCount": 500,
+          "status": "planned",
+          "parentId": "intro",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg3",
+              "claim": "采用改进的注意力机制和预训练模型",
+              "evidence": "对比实验验证性能提升",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "intro-structure",
+          "number": "1.4",
+          "title": "论文结构安排",
+          "type": "introduction",
+          "wordCount": 400,
+          "status": "planned",
+          "parentId": "intro",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg4",
+              "claim": "论文分为五章，系统阐述研究过程",
+              "evidence": "各章节逻辑衔接紧密",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        }
+      ],
+      "argumentPlan": [],
+      "plannedRefs": []
+    },
+    {
+      "id": "theory",
+      "number": "2",
+      "title": "深度学习与自然语言处理理论基础",
+      "type": "literature-review",
+      "wordCount": 2500,
+      "status": "planned",
+      "children": [
+        {
+          "id": "theory-dl",
+          "number": "2.1",
+          "title": "深度学习基础",
+          "type": "literature-review",
+          "wordCount": 800,
+          "status": "planned",
+          "parentId": "theory",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg5",
+              "claim": "深度学习通过多层神经网络自动提取特征",
+              "evidence": "CNN、RNN等模型在图像和文本任务中的成功",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "theory-nlp",
+          "number": "2.2",
+          "title": "自然语言处理核心任务",
+          "type": "literature-review",
+          "wordCount": 800,
+          "status": "planned",
+          "parentId": "theory",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg6",
+              "claim": "NLP任务包括文本分类、序列标注、机器翻译等",
+              "evidence": "各任务的技术挑战和典型方法",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "theory-model",
+          "number": "2.3",
+          "title": "常用深度学习模型",
+          "type": "literature-review",
+          "wordCount": 900,
+          "status": "planned",
+          "parentId": "theory",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg7",
+              "claim": "RNN、LSTM、Transformer等模型是NLP的基石",
+              "evidence": "模型结构对比和适用场景分析",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        }
+      ],
+      "argumentPlan": [],
+      "plannedRefs": []
+    },
+    {
+      "id": "method",
+      "number": "3",
+      "title": "基于深度学习的NLP模型设计",
+      "type": "methodology",
+      "wordCount": 2500,
+      "status": "planned",
+      "children": [
+        {
+          "id": "method-arch",
+          "number": "3.1",
+          "title": "模型总体架构",
+          "type": "methodology",
+          "wordCount": 800,
+          "status": "planned",
+          "parentId": "method",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg8",
+              "claim": "采用编码器-解码器结构，结合注意力机制",
+              "evidence": "架构图展示各模块功能",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "method-attention",
+          "number": "3.2",
+          "title": "改进的注意力机制",
+          "type": "methodology",
+          "wordCount": 800,
+          "status": "planned",
+          "parentId": "method",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg9",
+              "claim": "引入多头注意力机制提升特征提取能力",
+              "evidence": "数学公式推导和算法描述",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "method-pretrain",
+          "number": "3.3",
+          "title": "预训练模型微调策略",
+          "type": "methodology",
+          "wordCount": 900,
+          "status": "planned",
+          "parentId": "method",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg10",
+              "claim": "基于BERT的微调方法适应特定NLP任务",
+              "evidence": "微调步骤和参数设置",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        }
+      ],
+      "argumentPlan": [],
+      "plannedRefs": []
+    },
+    {
+      "id": "experiment",
+      "number": "4",
+      "title": "实验设计与结果分析",
+      "type": "results",
+      "wordCount": 2000,
+      "status": "planned",
+      "children": [
+        {
+          "id": "exp-setup",
+          "number": "4.1",
+          "title": "实验环境与数据集",
+          "type": "results",
+          "wordCount": 600,
+          "status": "planned",
+          "parentId": "experiment",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg11",
+              "claim": "使用IMDB和AG News数据集进行文本分类实验",
+              "evidence": "数据集统计信息和预处理方法",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "exp-metrics",
+          "number": "4.2",
+          "title": "评价指标与对比方法",
+          "type": "results",
+          "wordCount": 600,
+          "status": "planned",
+          "parentId": "experiment",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg12",
+              "claim": "采用准确率、F1分数等指标，对比传统机器学习方法",
+              "evidence": "指标定义和对比方法选择依据",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "exp-results",
+          "number": "4.3",
+          "title": "实验结果与分析",
+          "type": "results",
+          "wordCount": 800,
+          "status": "planned",
+          "parentId": "experiment",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg13",
+              "claim": "改进模型在准确率上提升5%，验证了注意力机制的有效性",
+              "evidence": "表格和图表展示实验结果",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        }
+      ],
+      "argumentPlan": [],
+      "plannedRefs": []
+    },
+    {
+      "id": "conclusion",
+      "number": "5",
+      "title": "结论与展望",
+      "type": "conclusion",
+      "wordCount": 1000,
+      "status": "planned",
+      "children": [
+        {
+          "id": "concl-summary",
+          "number": "5.1",
+          "title": "研究总结",
+          "type": "conclusion",
+          "wordCount": 400,
+          "status": "planned",
+          "parentId": "conclusion",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg14",
+              "claim": "本研究成功设计并验证了基于深度学习的NLP模型",
+              "evidence": "实验结果支持模型有效性",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "concl-limitation",
+          "number": "5.2",
+          "title": "研究局限性",
+          "type": "conclusion",
+          "wordCount": 300,
+          "status": "planned",
+          "parentId": "conclusion",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg15",
+              "claim": "模型在低资源语言上表现有限，计算资源需求高",
+              "evidence": "实验中的观察和限制",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        },
+        {
+          "id": "concl-future",
+          "number": "5.3",
+          "title": "未来工作展望",
+          "type": "conclusion",
+          "wordCount": 300,
+          "status": "planned",
+          "parentId": "conclusion",
+          "children": [],
+          "argumentPlan": [
+            {
+              "id": "arg16",
+              "claim": "未来可探索多模态NLP和模型轻量化方向",
+              "evidence": "技术发展趋势分析",
+              "supportingRefs": [],
+              "counterArgument": ""
+            }
+          ],
+          "plannedRefs": []
+        }
+      ],
+      "argumentPlan": [],
+      "plannedRefs": []
+    }
+  ],
+  "totalWordCount": 10000,
+  "createdAt": "2026-06-01T10:16:26.048Z",
+  "updatedAt": "2026-06-01T10:16:26.048Z"
+}

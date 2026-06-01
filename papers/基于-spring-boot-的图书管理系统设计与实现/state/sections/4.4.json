@@ -1,0 +1,39 @@
+{
+  "sectionNumber": "4.4",
+  "title": "接口设计",
+  "content": "## 4.4 接口设计\n\n后端接口这块是照着 RESTful 风格来搞的，用 URL 路径加上 HTTP 方法去表示对资源的操作。这么设计的话，前后端分离开发还有后续维护都会方便不少 [1]。接口返回的数据统一用 JSON 格式，里面有三个字段：`code`（状态码）、`message`（提示信息）和 `data`（业务数据）。\n\n主要接口大概能分成这么几块。图书管理这边，`GET /api/books` 用来做分页查询，传的参数有 page、size、keyword。新增图书走 `POST /api/books`，修改图书用 `PUT /api/books/{id}`，删除图书就是 `DELETE /api/books/{id}`。借阅管理这块，借书接口是 `POST /api/borrow`，参数得填 bookId 和 userId。还书接口是 `PUT /api/borrow/{id}/return`。用户管理这边，登录接口 `POST /api/login` 需要传 username 和 password，查个人信息用 `GET /api/users/{id}`。",
+  "wordCount": 462,
+  "status": "polishing",
+  "aiDetectionScore": 0.14,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "4.4",
+      "timestamp": "2026-05-15T09:36:41.319Z",
+      "score": 0.35,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "系统采用 RESTful 风格设计后端接口，通过统一的 URL 路径和 HTTP 方法标识资源操作，便于前后端分离开发与维护 [1]。",
+          "reason": "模板化开头，句式过于规整，缺乏个性化表达。"
+        },
+        {
+          "text": "所有接口返回 JSON 格式数据，包含 `code`（状态码）、`message`（提示信息）和 `data`（业务数据）三个字段。",
+          "reason": "高度书面化、模板化的描述，常见于AI生成的技术文档。"
+        },
+        {
+          "text": "核心接口设计如下：图书管理模块提供 `GET /api/books`（分页查询，参数 page、size、keyword）、`POST /api/books`（新增）、`PUT /api/books/{id}`（修改）、`DELETE /api/books/{id}`（删除）四个接口；借阅管理模块提供 `POST /api/borrow`（借书，参数 bookId、userId）和 `PUT /api/borrow/{id}/return`（还书）接口；用户管理模块提供 `POST /api/login`（登录，参数 username、password）和 `GET /api/users/{id}`（个人信息查询）接口。",
+          "reason": "连续使用'提供...接口'的相同句式，结构过于整齐，缺乏句式多样性。"
+        }
+      ],
+      "action": "detect",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "1",
+    "2",
+    "3",
+    "4"
+  ],
+  "lastModified": "2026-05-15T09:43:34.185Z"
+}

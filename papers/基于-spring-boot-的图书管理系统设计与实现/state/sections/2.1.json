@@ -1,0 +1,46 @@
+{
+  "sectionNumber": "2.1",
+  "title": "Spring Boot框架",
+  "content": "## 2.1 Spring Boot框架\n\nSpring Boot是Pivotal团队基于Spring框架搞出来的一个快速开发框架，主要为了解决Spring应用搭建和配置过程中那些繁琐的问题。它的核心设计思路是“约定优于配置”，这样一来，在实际项目里开发者需要手动处理的配置工作量就明显少了很多。\n\n这个框架有几个比较实用的特性，比如自动配置、内嵌服务器和依赖管理。自动配置这块，框架会根据项目里引入的依赖自己完成Bean的装配，举个例子，加了spring-boot-starter-web这个依赖以后，Spring Boot就会自动配好DispatcherServlet和Tomcat服务器，开发者基本不用去碰那些复杂的XML配置文件了[4]。内嵌服务器（像Tomcat、Jetty这些）做得也挺好，应用能直接打包成JAR包运行，不用再额外部署到外部Web容器里，部署流程简化了不少。依赖管理方面，Spring Boot通过spring-boot-starter-parent作为父POM来统一管各依赖的版本号，版本冲突的问题就少了很多[2]。\n\n放到图书管理系统开发这个场景来看，这些特性确实能派上用场。Spring Boot的自动配置功能能快速搭好Web层和数据访问层的基础设施，开发者就能把更多精力放到业务逻辑实现上。内嵌服务器让本地测试和调试方便了不少，依赖管理机制也保证了项目依赖的稳定性和兼容性[1]。总的来看，Spring Boot给图书管理系统的快速构建和高效迭代打下了比较扎实的基础。",
+  "wordCount": 583,
+  "status": "polishing",
+  "aiDetectionScore": 0.57,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "2.1",
+      "timestamp": "2026-05-15T09:32:16.785Z",
+      "score": 0.85,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "上述特性显著提升了开发效率。在图书管理系统开发中，Spring Boot的自动",
+          "reason": "AI标志性表达: \"显著提升了\""
+        },
+        {
+          "text": "为图书管理系统的快速构建与高效迭代提供了",
+          "reason": "句式模板化"
+        },
+        {
+          "text": "Spring Boot是Pivotal团队在Spring框架基础上开发的快速开发框架，旨在简化Spring应用的初始搭建和配置过程。其核心价值在于通过“约定优于配置”的设计理念，大幅降低开发者的配置负担。",
+          "reason": "句式模板化（'旨在...'、'其核心价值在于...'），用词过于书面化（'大幅降低'），缺乏个人风格。"
+        },
+        {
+          "text": "上述特性显著提升了开发效率。在图书管理系统开发中，Spring Boot的自动配置功能能够快速搭建Web层和数据访问层的基础设施，使开发者专注于业务逻辑的实现。",
+          "reason": "段落以'上述特性'开头，结构规整；内容流于表面，缺乏具体实例或深入分析。"
+        },
+        {
+          "text": "因此，Spring Boot为图书管理系统的快速构建与高效迭代提供了坚实的技术基础。",
+          "reason": "过度使用'因此'作为段落结尾，句式模板化（'为...提供了...基础'），逻辑过于顺滑。"
+        }
+      ],
+      "action": "rewrite",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "4",
+    "2",
+    "1"
+  ],
+  "lastModified": "2026-05-15T09:41:16.603Z"
+}

@@ -1,0 +1,79 @@
+# Paper Writer — Docker Compose 部署
+# 启动: docker compose up -d
+# 查看: docker compose ps
+# 日志: docker compose logs -f
+
+services:
+  # ── MySQL ──
+  mysql:
+    image: mysql:8.0
+    container_name: paper-writer-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-secret-change-me}
+      MYSQL_DATABASE: paper_writer
+      MYSQL_USER: paper_writer
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-db-secret-change-me}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./deploy/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "127.0.0.1:3306:3306"   # 仅本地访问
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: paper-writer-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+
+  # ── NestJS API ──
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: paper-writer-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: paper_writer
+      DB_PASS: ${MYSQL_PASSWORD:-db-secret-change-me}
+      DB_NAME: paper_writer
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-random-32-char-string}
+      JWT_EXPIRES: "7200"
+      INKOS_PROJECT_ROOT: /app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Nginx (前台 + 后台 + API 代理) ──
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: paper-writer-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+
+volumes:
+  mysql_data:
+  redis_data:

@@ -1,0 +1,52 @@
+{
+  "sectionNumber": "5.5",
+  "title": "数据统计模块实现",
+  "content": "## 5.5 数据统计模块实现\n\n做数据统计这块，说白了就是通过图表把图书借了多少、每类书占多大比例这些信息给展示出来，这样管理员在决策时心里也有个底。这个模块前端用了 ECharts 图表库，后端做聚合查询，两边配合着跑 [3]。\n\n后端 Service 层那边，用 MyBatis 写 SQL 到数据库里查数据。比如要统计每月借阅量，就在 `borrow_records` 表里用 `GROUP BY` 按 `borrow_date` 按月分组，再用 `COUNT` 函数算出借阅次数 [5]。如果查图书分类占比，就得把 `books` 表和 `categories` 表关联起来，按分类名称分组统计数量。查完的结果包装成键值对列表，里面存名称和数值，最后通过 RESTful API 返回给前端。\n\n前端 Controller 收到请求后，调对应的 Service 方法把数据取过来，用 JSON 格式返回。前端页面引了 ECharts 库，页面一加载就用 AJAX 异步请求后端接口，拿到数据后渲染成图表 [4]。借阅量统计用柱状图展示各月趋势，分类占比用饼图，哪类书多哪类书少一眼就能看出来。",
+  "wordCount": 493,
+  "status": "polishing",
+  "aiDetectionScore": 0.26,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "5.5",
+      "timestamp": "2026-05-15T09:38:10.847Z",
+      "score": 0.85,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "数据统计模块旨在通过可视化图表直观展示图书借阅量、分类占比等核心指标，为管理决策提供数据支撑。",
+          "reason": "模板化开头句式，过度使用'旨在'、'核心指标'、'数据支撑'等学术套话，缺乏自然感。"
+        },
+        {
+          "text": "在实现中，后端 Service 层通过 MyBatis 编写 SQL 语句对数据库进行聚合查询。",
+          "reason": "段落开头模式高度一致（'在实现中'），句式规整，缺少真人写作的松散感。"
+        },
+        {
+          "text": "例如，统计每月借阅量时，使用 `GROUP BY` 对 `borrow_records` 表中的 `borrow_date` 按月分组，并结合 `COUNT` 函数计算借阅次数 [5]。",
+          "reason": "过度使用'例如'作为转接词，句式模板化（'使用...对...'），逻辑过于顺滑。"
+        },
+        {
+          "text": "前端 Controller 接收请求后，调用对应 Service 方法获取数据，并以 JSON 格式响应。",
+          "reason": "句式高度规整，缺乏个性化表达，读起来像通用技术文档模板。"
+        },
+        {
+          "text": "例如，借阅量统计使用柱状图展示各月趋势，分类占比使用饼图呈现各类别分布。",
+          "reason": "再次使用'例如'，句式重复（'使用...展示...'），缺乏多样性。"
+        }
+      ],
+      "action": "rewrite",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "3",
+    "5",
+    "4",
+    "前端页面",
+    "Controller层",
+    "Service层",
+    "Mapper层",
+    "(数据库)",
+    "ECharts图表"
+  ],
+  "lastModified": "2026-05-15T09:44:16.197Z"
+}

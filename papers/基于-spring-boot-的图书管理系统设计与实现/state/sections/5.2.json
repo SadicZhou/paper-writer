@@ -1,0 +1,53 @@
+{
+  "sectionNumber": "5.2",
+  "title": "登录注册模块实现",
+  "content": "## 5.2 登录注册模块实现\n\n登录注册模块可以看作是整个系统的入口，主要职责就是搞定用户身份认证和账号管理。在开发过程中，项目用到了Spring Security框架，密码这块选的是BCrypt算法来做加密存储，用户的登录状态则依靠HttpSession来维护 [1]。\n\n先来说说用户注册的流程。系统会先检查一下用户名是不是已经被别人注册过了，同时还要看看密码是不是满足复杂度要求。在密码处理上，代码里调用了`BCryptPasswordEncoder.encode()`方法，把密码转成哈希值之后再存到数据库里，这样一来，明文存储的问题就避免了。用户注册成功之后，返回的信息里也不会带上密码字段。\n\n再看登录这块，系统通过`AuthenticationManager`来验证用户填写的凭证。验证通过了之后，系统会创建一个Session对象，同时把用户信息放到`SecurityContextHolder`里面 [2]。这么做的实际效果是，后续用户再发请求的时候，系统就能知道当前操作的人是谁了。",
+  "wordCount": 335,
+  "status": "polishing",
+  "aiDetectionScore": 0.14,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "5.2",
+      "timestamp": "2026-05-15T09:37:19.828Z",
+      "score": 0.35,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "登录注册模块是系统的入口，负责用户身份认证与账号管理。",
+          "reason": "模板化句式，'是...的入口，负责...'为常见AI套话。"
+        },
+        {
+          "text": "在用户注册功能中，系统首先校验用户名唯一性与密码复杂度。",
+          "reason": "段落以'在...功能中'开头，结构高度规整，缺乏自然变化。"
+        },
+        {
+          "text": "密码通过`BCryptPasswordEncoder.encode()`方法生成哈希值后存入数据库，避免明文存储风险。",
+          "reason": "句式过于规整，'通过...方法...后，避免...'为典型AI句式。"
+        },
+        {
+          "text": "登录功能通过`AuthenticationManager`验证用户凭证，认证通过后创建Session对象，并将用户信息存入`SecurityContextHolder`中，确保后续请求可获取当前用户身份。",
+          "reason": "逻辑过于顺滑，'通过...验证...，认证通过后...，并将...，确保...'为模板化逻辑链。"
+        }
+      ],
+      "action": "detect",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "1",
+    "2",
+    "用户请求",
+    "校验用户名与密码格式",
+    "BCrypt加密密码",
+    "保存用户信息到数据库",
+    "返回注册成功",
+    "输入用户名与密码",
+    "AuthenticationManager验证",
+    "创建Session，存入SecurityContext",
+    "返回登录成功",
+    "返回错误提示",
+    "3",
+    "4"
+  ],
+  "lastModified": "2026-05-15T09:43:46.010Z"
+}

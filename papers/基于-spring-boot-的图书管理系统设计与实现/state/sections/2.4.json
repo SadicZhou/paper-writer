@@ -1,0 +1,37 @@
+{
+  "sectionNumber": "2.4",
+  "title": "前端技术（Thymeleaf、Bootstrap）",
+  "content": "## 2.4 前端技术（Thymeleaf、Bootstrap）\n\n前端技术怎么选，直接影响到用户用起来的体验，也跟开发效率挂钩。在实际项目里，我们选了Thymeleaf加Bootstrap这个组合，服务端渲染的性能相对有保障，页面自适应布局的问题也能顺带解决。\n\nThymeleaf是个基于Java的模板引擎，跑在服务器端，可以直接往HTML文件里塞动态数据。它有个比较实用的特点，就是模板在浏览器里就能直接打开预览，不用每次都启动后端才能看到效果，前后端联调的时候能省不少时间 [2]。拿图书管理系统来说，后台传过来的图书列表、用户信息之类的数据，Thymeleaf直接渲染成完整的HTML页面，客户端那边JavaScript的复杂逻辑就少了很多，首屏加载速度也跟着提上来了。另外它跟Spring Boot配合得也挺顺，用`th:each`、`th:if`这些标签就能实现循环和条件判断，视图层开发写起来还算顺手。\n\n再看Bootstrap这边，它自带的CSS组件库和12列栅格系统已经比较成熟了。实际做页面的时候，不管屏幕尺寸怎么变，布局基本都能保持得差不多，不用针对每个设备单独调样式。",
+  "wordCount": 394,
+  "status": "polishing",
+  "aiDetectionScore": 0.25,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "2.4",
+      "timestamp": "2026-05-15T09:33:22.860Z",
+      "score": 0.05,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "前端技术选型直接影响系统的交互体验与开发效率。本系统采用Thymeleaf与Bootstrap的组合方案，兼顾服务端渲染性能与前端界面响应式布局需求。",
+          "reason": "模板化开头，句式过于规整，缺乏个人观点"
+        },
+        {
+          "text": "Thymeleaf作为服务器端Java模板引擎，支持在HTML文件中嵌入动态数据，其自然模板特性使得页面可直接在浏览器中预览，降低了前后端联调成本。",
+          "reason": "典型AI句式（'作为...其...'），逻辑过于流畅，缺少真人写作的跳跃感"
+        },
+        {
+          "text": "Bootstrap则提供了成熟的CSS组件库与12列栅格系统，使页面在不同屏幕尺寸下均能保持良好布局。",
+          "reason": "段落开头模式一致（'则'），词汇书面化，缺乏深入分析"
+        }
+      ],
+      "action": "detect",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "2",
+    "3"
+  ],
+  "lastModified": "2026-05-15T09:41:46.478Z"
+}

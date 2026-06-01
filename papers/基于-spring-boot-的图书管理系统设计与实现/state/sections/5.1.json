@@ -1,0 +1,37 @@
+{
+  "sectionNumber": "5.1",
+  "title": "开发环境搭建",
+  "content": "## 5.1 开发环境搭建\n\n系统开发环境选用了当前比较常用的技术组合。具体来说，IDE 用的是 IntelliJ IDEA 2023.1，编程语言选了 JDK 8，数据库这块用了 MySQL 8.0.33，项目构建工具是 Maven 3.8.6。后端框架方面，选的是 Spring Boot 2.7.12，ORM 框架用了 MyBatis-Plus 3.5.3，前端框架则用的是 Vue 3.2.45。在环境搭建过程中，主要步骤是先安装 JDK 并配置好环境变量，接着装 MySQL 再把对应的数据库创建出来，最后通过 Maven 把项目依赖给导进来。从实际使用情况来看，这套环境组合运行起来比较稳定，社区支持也还行，基本能满足系统开发和测试工作的需要 [1][2]。",
+  "wordCount": 293,
+  "status": "polishing",
+  "aiDetectionScore": 0.13,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "5.1",
+      "timestamp": "2026-05-15T09:36:54.617Z",
+      "score": 0.35,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "本系统开发环境基于主流技术栈搭建，具体配置如下：集成开发环境选用 IntelliJ IDEA 2023.1，编程语言采用 JDK 8，数据库使用 MySQL 8.0.33，项目构建工具为 Maven 3.8.6。",
+          "reason": "句式高度模板化，连续使用'选用/采用/使用'等动词，结构整齐无变化。"
+        },
+        {
+          "text": "后端框架采用 Spring Boot 2.7.12，ORM 框架选用 MyBatis-Plus 3.5.3，前端框架使用 Vue 3.2.45。",
+          "reason": "与上一句结构完全重复，均为'框架+采用/选用/使用+版本号'，缺乏句式多样性。"
+        },
+        {
+          "text": "该环境组合具备成熟稳定、社区支持广泛的特点，可有效支撑系统开发与测试 [1][2]。",
+          "reason": "结尾为典型的AI总结套话，'成熟稳定、社区支持广泛'是高频模板词汇，缺乏具体分析。"
+        }
+      ],
+      "action": "detect",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "1",
+    "2"
+  ],
+  "lastModified": "2026-05-15T09:43:39.072Z"
+}

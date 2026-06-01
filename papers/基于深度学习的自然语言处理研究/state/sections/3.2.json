@@ -1,0 +1,44 @@
+{
+  "sectionNumber": "3.2",
+  "title": "改进的注意力机制",
+  "content": "## 3.2 改进的注意力机制\n\n在序列到序列模型里，注意力机制主要干的事就是让解码器在生成每个目标词时，能动态地去盯着编码器输出的不同位置。这样一来，长距离依赖带来的问题就能缓解一些 [1]。平时用传统的加性注意力或者点积注意力，效果还凑合，但一旦遇到更复杂的语义关系，它们就只在一个表示空间里折腾，表达能力明显不太够用。考虑到这个情况，这部分搞了个多头注意力机制（Multi-Head Attention），从不同的表示子空间里并行地抓取信息，想着能让模型的特征提取能力再强点。\n\n多头注意力机制的想法大致是这样的：先把查询（Query）、键（Key）和值（Value）分别通过 \\(h\\) 组不一样的线性变换，映射到 \\(d_k\\) 维的子空间里，然后在每个子空间里单独算缩放点积注意力。",
+  "wordCount": 299,
+  "status": "polishing",
+  "aiDetectionScore": 0.54,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "3.2",
+      "timestamp": "2026-06-01T10:12:41.870Z",
+      "score": 0.33,
+      "provider": "llm-self",
+      "flaggedPassages": [],
+      "action": "detect",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "1",
+    "\\text{MultiHead}(Q",
+    "K",
+    "V) = \\text{Concat}(\\text{head}_1",
+    "\\ldots",
+    "\\text{head}_h) W^O\n\\",
+    "\\text{head}_i = \\text{Attention}(Q W_i^Q",
+    "K W_i^K",
+    "V W_i^V)\n\\",
+    "\\text{Attention}(Q",
+    "V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right) V\n\\",
+    "Q",
+    "线性变换 h 组",
+    "V",
+    "缩放点积注意力 head_1",
+    "缩放点积注意力 head_2",
+    "缩放点积注意力 head_h",
+    "拼接",
+    "线性变换 W^O",
+    "输出",
+    "2",
+    "3"
+  ],
+  "lastModified": "2026-06-01T10:15:30.264Z"
+}

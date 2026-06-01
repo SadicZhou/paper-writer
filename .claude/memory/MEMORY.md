@@ -1,0 +1,9 @@
+- [User: zhoujianhao (Ma), lead developer](user.md) — solo creator of InkOS, primary contributor with 640+ commits, uses conventional commits (fix/feat/chore)
+- [Project: uncommitted feature branch in progress](project.md) — 37 files changed across import, radar, studio chat, and pipeline runner
+- [DeepSeek Anthropic endpoint streaming fix](deepseek-streaming-fix.md) — `model.reasoning` must be true for pi-ai's buildParams to apply thinking disable
+- [Reference: external resources](reference.md) — npm (@actalk/inkos), GitHub (Narcooo/inkos), OpenClaw Skill on ClawHub
+- [Project Architecture](project-architecture.md) — monorepo structure, NestJS modules, DB schema, frontend architecture
+- [Paper Persistence](paper-persistence.md) — MySQL + filesystem dual-write, migration, sync after pipeline
+- [SSE Events](sse-events.md) — real-time event pipeline, EventEmitter2 wildcard bug, token refresh
+- [Common Bugs](common-bugs.md) — frequently encountered bugs and their fixes (SSE, export, services, bcrypt, etc.)
+- [Deployment](deployment.md) — Docker, Nginx, PM2, env vars, startup commands

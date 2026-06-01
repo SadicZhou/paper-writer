@@ -1,0 +1,46 @@
+{
+  "sectionNumber": "5.6",
+  "title": "系统管理模块实现",
+  "content": "## 5.6 系统管理模块实现\n\n系统管理模块主要面向管理员，功能上包括用户管理、公告管理和权限控制这几项。从实际运行的角度来看，这个模块对保障系统安全、统一发布信息来说作用比较明显 [1]。\n\n管理员在用户管理功能上，可以通过前端页面查看、新增、编辑或者删除读者和管理员的账号信息。后端`UserController`里配了一个RESTful接口，路径是`/api/admin/users`，支持分页查询和条件筛选。Service层修改用户信息的时候会先做数据合法性校验，校验通过之后再调`UserMapper`去操作数据库。权限控制这块用的是Spring Security的拦截器——我们在`SecurityConfig`里配了`antMatchers(\"/api/admin/**\").hasRole(\"ADMIN\")`，这样非管理员角色就访问不了后台接口 [2]。如果请求没登录或者权限不够，拦截器会返回401或403状态码。\n\n公告管理这边，管理员可以发布、修改和删除系统公告。`NoticeController`暴露了`/api/admin/notices`这个接口，公告数据存在`notice`表里，字段包括标题、正文和发布时间这些。前端公告列表页支持按标题做模糊搜索，后端靠MyBatis的动态SQL来拼接查询条件 [5]。公告发出去以后，所有登录系统的用户都能在首页看到最新发布的公告。",
+  "wordCount": 544,
+  "status": "polishing",
+  "aiDetectionScore": 0.56,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "5.6",
+      "timestamp": "2026-05-15T09:38:46.995Z",
+      "score": 0.26,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "在用户管理方面，管理员可通过前端页面查看、新增、编辑或删除读者与管理员账号。",
+          "reason": "句式模板化，以“在...方面”开头，结构规整，缺乏变化。"
+        },
+        {
+          "text": "公告管理模块允许管理员发布、修改和删除系统公告。",
+          "reason": "句式结构过于规整，类似模板化描述。"
+        },
+        {
+          "text": "后端`UserController`提供`/api/admin/users`路径的RESTful接口，支持分页查询与条件筛选。",
+          "reason": "技术描述过于书面化，缺乏自然口语感。"
+        }
+      ],
+      "action": "detect",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "1",
+    "2",
+    "5",
+    "用户请求",
+    "返回401",
+    "解析Token获取角色",
+    "返回403",
+    "放行请求",
+    "执行Controller逻辑",
+    "返回响应数据",
+    "4"
+  ],
+  "lastModified": "2026-05-15T09:44:30.797Z"
+}

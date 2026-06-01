@@ -1,0 +1,53 @@
+{
+  "sectionNumber": "5.3",
+  "title": "图书管理模块实现",
+  "content": "## 5.3 图书管理模块实现\n\n图书管理模块算是系统里比较核心的部分了，主要功能就是管理图书信息的增删改查，还有分类这些操作。实际开发过程中用了分层架构，前端请求由Controller层接收，业务逻辑在Service层处理，数据库操作交给Mapper层，这几个层互相配合，图书信息从录入到删除的整个流程基本都能覆盖到 [2]。\n\nController层这边写了个`BookController`类，通过RESTful API把接口暴露出去。比如新增图书时，前端会把书名、作者、ISBN、分类ID这些字段打成JSON数据传过来，Controller收到后就调用`BookService.addBook()`方法。这个方法会先检查ISBN号是否已经存在，确认没问题后再把图书信息存到数据库里 [3]。\n\n【图1 图书新增流程图】\n```mermaid\ngraph TD\n    A[前端提交图书信息] --> B[Controller接收请求]\n    B --> C[Service校验ISBN唯一性]\n    C -->|通过| D[持久化至数据库]\n    C -->|不通过| E[返回重复提示]\n    D --> F[返回成功响应]\n```\n\n图书列表查询这块，支持分页显示和条件筛选。Service层用MyBatis的动态SQL来拼查询条件，比如按书名、作者、分类这些字段做模糊搜索，查出来的结果用Page对象封装成分页数据返回 [4]。分类管理这边，系统单独维护了一张`Category`表，通过外键跟图书表关联起来，分类的增删改操作也都能做。",
+  "wordCount": 605,
+  "status": "polishing",
+  "aiDetectionScore": 0.14,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "5.3",
+      "timestamp": "2026-05-15T09:37:56.297Z",
+      "score": 0.85,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "实现了图书信息的全生命周期管理",
+          "reason": "句式模板化"
+        },
+        {
+          "text": "图书管理模块是系统的核心功能模块，负责图书信息的增删改查操作及分类管理。该模块采用分层架构设计，通过Controller层接收请求、Service层处理业务逻辑、Mapper层操作数据库，实现了图书信息的全生命周期管理",
+          "reason": "高度模板化的技术描述，'通过...层...'结构重复，'全生命周期管理'为AI常用套话"
+        },
+        {
+          "text": "在Controller层，系统定义了`BookController`类，通过RESTful API暴露接口。新增图书时，前端提交包含书名、作者、ISBN、分类ID等字段的JSON数据，Controller调用`BookService.addBook()`方法处理。该方法首先校验ISBN唯一性，随后将图书信息持久化至数据库",
+          "reason": "句式过于规整，'首先...随后...'为AI典型转接模式，缺乏真人写作的松散感"
+        },
+        {
+          "text": "图书列表查询支持分页和条件筛选。Service层通过MyBatis动态SQL拼接查询条件，支持按书名、作者、分类等字段模糊查询，结果以Page对象分页返回",
+          "reason": "逻辑过于顺滑无断点，缺少真人写作中偶尔的跳跃或补充说明"
+        },
+        {
+          "text": "分类管理方面，系统维护独立的`Category`表，通过外键关联图书，支持分类的增删改操作",
+          "reason": "段落结尾过于规整，'方面'为AI常用段落开头模板"
+        }
+      ],
+      "action": "rewrite",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "2",
+    "3",
+    "前端提交图书信息",
+    "Controller接收请求",
+    "Service校验ISBN唯一性",
+    "持久化至数据库",
+    "返回重复提示",
+    "返回成功响应",
+    "4",
+    "5"
+  ],
+  "lastModified": "2026-05-15T09:43:53.382Z"
+}

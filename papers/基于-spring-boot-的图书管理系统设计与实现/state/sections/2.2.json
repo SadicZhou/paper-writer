@@ -1,0 +1,36 @@
+{
+  "sectionNumber": "2.2",
+  "title": "前后端分离与MVC模式",
+  "content": "## 2.2 前后端分离与MVC模式\n\n现在搞项目基本都走前后端分离的路子，把表示层和业务逻辑层分开来处理。前端主要管界面和交互那摊事，后端就负责数据服务和业务处理。这么一来团队能并行开发，独立部署也挺方便，系统扩展起来相对灵活[5]。拿图书管理系统来说，前端通过HTTP请求去调后端的RESTful API，要么取数据要么交数据，后端返回JSON格式的响应。前后端各管各的，职责划分得挺清楚。\n\nSpring MVC是Spring Boot自带的Web框架，用的就是模型-视图-控制器（MVC）那套设计模式。在前后端分离的环境下，Controller层主要接收前端发来的请求，然后调用Service层去处理业务逻辑，最后把结果以JSON格式返回。实际跑起来的时候流程大致是这样：前端发个GET或者POST请求到Controller对应的URL地址，Controller拿到参数后交给Service层去处理图书的增删改查，最后把结果封装成ResponseEntity再返回[5]。",
+  "wordCount": 380,
+  "status": "polishing",
+  "aiDetectionScore": 0.55,
+  "aiDetectionLog": [
+    {
+      "sectionNumber": "2.2",
+      "timestamp": "2026-05-15T09:32:41.422Z",
+      "score": 0.95,
+      "provider": "llm-self",
+      "flaggedPassages": [
+        {
+          "text": "前后端分离架构将表示层与业务逻辑层解耦，前端专注于用户界面与交互，后端专注于数据服务与业务处理。该架构有利于团队并行开发、独立部署和系统扩展[5]。",
+          "reason": "高度模板化的句式，'将...解耦'、'专注于...'、'有利于...'等结构常见于AI生成文本，缺乏自然变化。"
+        },
+        {
+          "text": "典型流程为：前端发送GET/POST请求至Controller映射的URL端点，Controller解析参数后委托Service层完成图书增删改查操作，最终将结果封装为ResponseEntity返回[5]。",
+          "reason": "句式过于规整，'典型流程为：...'是AI常用模板，且逻辑过于顺滑，缺少真人写作中可能出现的松散或跳跃。"
+        },
+        {
+          "text": "Spring MVC是Spring Boot内置的Web框架，遵循模型-视图-控制器（MVC）设计模式。",
+          "reason": "定义式开头，缺乏上下文引入，常见于AI生成的教科书式描述。"
+        }
+      ],
+      "action": "rewrite",
+      "attempt": 1
+    }
+  ],
+  "citations": [
+    "5"
+  ],
+  "lastModified": "2026-05-15T09:41:31.906Z"
+}

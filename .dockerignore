@@ -1,0 +1,11 @@
+node_modules
+dist
+papers
+.env
+.env.local
+*.log
+.git
+.gitignore
+scripts/screenshots
+.claude
+memory
