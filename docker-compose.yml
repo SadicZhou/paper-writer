@@ -18,7 +18,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./deploy/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "127.0.0.1:3306:3306"   # 仅本地访问
+      - "127.0.0.1:3307:3306"   # 避免与宿主机 MySQL 冲突
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

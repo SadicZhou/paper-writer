@@ -15,11 +15,11 @@ RUN pnpm install --frozen-lockfile || pnpm install
 
 # 构建前端
 COPY packages/studio/src packages/studio/src
-COPY packages/studio/index.html packages/studio/vite.config.ts packages/studio/tsconfig.json packages/studio/
+COPY packages/studio/index.html packages/studio/vite.config.ts packages/studio/tsconfig.json packages/studio/tsconfig.server.json packages/studio/
 COPY packages/admin-panel/src packages/admin-panel/src
 COPY packages/admin-panel/index.html packages/admin-panel/vite.config.ts packages/admin-panel/tsconfig.json packages/admin-panel/
 
-RUN pnpm --filter @actalk/inkos-studio build
+RUN pnpm --filter @actalk/inkos-studio run build:client
 RUN pnpm --filter @actalk/inkos-admin build
 
 # ── Nginx 运行阶段 ──
