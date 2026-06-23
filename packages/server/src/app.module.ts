@@ -14,7 +14,10 @@ import { JwtAuthGuard } from "./common/guards/jwt-auth.guard.js";
 @Module({
   imports: [
     EventEmitterModule.forRoot({ wildcard: true, delimiter: ":" }),
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env", ".env.local"] }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [".env.local", ".env", "../../.env"],
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

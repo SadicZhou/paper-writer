@@ -7,7 +7,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch & node --watch dist/main.js",
+    "dev": "node scripts/run-dev.mjs",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

@@ -14,7 +14,7 @@ export default defineConfig({
     port: 4567,
     proxy: {
       "/api/v1/events": {
-        target: `http://localhost:${process.env.INKOS_API_PORT ?? "3000"}`,
+        target: `http://127.0.0.1:${process.env.INKOS_API_PORT ?? "3000"}`,
         changeOrigin: true,
         // SSE needs unbuffered streaming — bypass http-proxy response handling
         selfHandleResponse: true,
@@ -26,7 +26,7 @@ export default defineConfig({
         },
       },
       "/api": {
-        target: `http://localhost:${process.env.INKOS_API_PORT ?? "3000"}`,
+        target: `http://127.0.0.1:${process.env.INKOS_API_PORT ?? "3000"}`,
         changeOrigin: true,
       },
     },

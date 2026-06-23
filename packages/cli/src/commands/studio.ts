@@ -124,14 +124,14 @@ export async function launchStudioWorkbench(root: string, port: string): Promise
 
   if (!launch) {
     logError(
-      "InkOS Studio not found. If you cloned the repo, run:\n" +
+      "Studio 未找到。如果是从 Git 克隆的项目，请运行：\n" +
       "  cd packages/studio && pnpm install && pnpm build\n" +
-      "Then run 'inkos studio' from the project root.",
+      "然后在项目根目录运行 'inkos studio'。",
     );
     process.exit(1);
   }
 
-  log(`Starting InkOS Studio on ${url}`);
+  log(`正在启动 Paper Writer Studio：${url}`);
 
   const child = spawn(launch.command, launch.args, {
     cwd: root,
@@ -169,7 +169,7 @@ export async function launchStudioEntry(
 ): Promise<void> {
   const prepared = await prepareStudioRoot(root);
   if (prepared.initialized) {
-    log(`No inkos.json found in ${root}. Initialized a minimal InkOS project for Studio.`);
+    log(`${root} 中未找到 inkos.json，已为 Studio 初始化最小项目配置。`);
   }
 
   if (hooks.launchStudio) {
@@ -182,7 +182,7 @@ export async function launchStudioEntry(
 
 export function createStudioCommand(hooks: StudioCommandHooks = {}): Command {
   return new Command("studio")
-  .description("Start InkOS Studio web workbench")
+  .description("启动 Paper Writer Studio Web 工作台")
   .option("-p, --port <port>", "Server port", "4567")
   .action(async (opts) => {
     const root = findProjectRoot();

@@ -7,12 +7,12 @@ export interface TuiCommandHooks {
 
 export function createTuiCommand(hooks: TuiCommandHooks = {}): Command {
   return new Command("tui")
-    .description("Open the InkOS project workspace TUI")
+    .description("打开项目工作区 TUI（已弃用）")
     .action(async () => {
       if (hooks.launchTui) {
         await hooks.launchTui(process.cwd());
         return;
       }
-      log("InkOS TUI has been removed. Please use InkOS Studio (web UI) instead: inkos studio");
+      log("TUI 已移除，请使用 Studio Web 界面代替：inkos studio");
     });
 }

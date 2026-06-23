@@ -1,5 +1,5 @@
 /**
- * Temporal memory database for InkOS truth files.
+ * 时间维度记忆数据库，用于管理论文状态文件（truth files）。
  *
  * Uses Node.js built-in SQLite (node:sqlite, Node 22+).
  * Stores facts with temporal validity (valid_from/valid_until chapter numbers),

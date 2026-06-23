@@ -242,6 +242,46 @@ return { outline: await this.paperService.getOutline(id) };
 | 005 | DB 替换丢失内置端点 | `services.service.ts` |
 | 006 | upsert 缺失 | `services.service.ts` |
 | 007 | Controller 多包装一层 | `paper.controller.ts` |
+| 008 | Windows dev 脚本 + 代理 IPv6 + 缺 .env | `run-dev.mjs`, `vite.config.ts`, `app.module.ts`, `docker-compose.yml` |
+
+---
+
+## BUG-008: Windows 下 pnpm dev 后端未启动 + Admin API 代理 ECONNREFUSED
+
+**发现时间**: 2026-06-23  
+**状态**: ✅ 已修复  
+**影响范围**: Admin Panel、Studio 开发环境 API 代理
+
+### 现象
+- 访问 `http://localhost:5173/api/v1/admin/papers` 报 `http proxy error: ECONNREFUSED ::1:3000`
+- `pnpm dev` 后终端只有 `tsc --watch` 输出，无 `Server running on http://localhost:3000`
+- 手动启动后端报 `Access denied for user 'root'@'localhost' (using password: NO)`
+
+### 根因
+
+**1. Windows dev 脚本不兼容**
+
+`packages/server/package.json` 原脚本 `tsc --watch & node --watch dist/main.js` 在 Windows cmd 下 `tsc --watch` 阻塞进程，`node` 永远不会执行。
+
+**2. Vite 代理解析 localhost 为 IPv6**
+
+`admin-panel/vite.config.ts` 代理目标为 `http://localhost:3000`，在部分 Windows 环境解析为 `::1`，而后端未监听时表现为 `ECONNREFUSED ::1:3000`。
+
+**3. 缺少 .env 与 Docker Redis 端口**
+
+无 `packages/server/.env` 时 TypeORM 使用 root 空密码连接本机 MySQL 失败；`docker-compose.yml` 未暴露 Redis 6379，本地 `pnpm dev` 无法连接 Redis。
+
+### 修复
+
+1. 新增 `packages/server/scripts/run-dev.mjs`：先 `tsc` 编译，再并行 `tsc --watch` + `node --watch`
+2. Admin/Studio Vite 代理改为 `127.0.0.1:3000`
+3. `app.module.ts` 增加 `../../.env` 加载路径
+4. `docker-compose.yml` 暴露 Redis `127.0.0.1:6379`
+5. 更新 `packages/server/.env.example` 为 Docker 本地开发默认配置
+
+### 补充（EADDRINUSE）
+
+`node --watch` 在 `tsc --watch` 触发重编译时会立即重启，旧 Nest 进程未释放 3000 端口。改为 `run-dev.mjs` 手动 SIGTERM 等待退出后再重启，并在 `main.ts` 启用 `enableShutdownHooks()`。
 
 ---
 

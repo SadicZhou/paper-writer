@@ -7,6 +7,7 @@ import {
   PaperRunner,
   WordExporter,
   createLLMClient,
+  derivePaperIdFromTitle,
   type AgentContext,
   type PaperRunnerOptions,
   type PaperConfig,
@@ -16,8 +17,26 @@ import { Paper } from "../entities/paper.entity.js";
 import { UserService } from "../user/user.service.js";
 import { DbStorageService } from "./db-storage.service.js";
 
+/**
+ * PaperService — 论文业务逻辑层
+ *
+ * 职责：
+ * 1. 论文 CRUD（MySQL 唯一数据源）
+ * 2. 流水线调度（选题、文献、大纲、写作、润色）
+ * 3. 章节/大纲/参考文献/创新点管理
+ * 4. Word 导出
+ *
+ * 数据策略：
+ * - 读写：MySQL 为唯一数据源
+ * - 流水线：PaperRunner 写文件系统，完成后自动同步到 MySQL
+ * - 导出：从 MySQL 读取数据，传给 WordExporter
+ *
+ * @author zjh
+ * @date 2026-06-02
+ */
 @Injectable()
 export class PaperService {
+  /** 项目根目录，用于流水线文件系统操作 */
   private projectRoot: string;
 
   constructor(
@@ -32,25 +51,42 @@ export class PaperService {
 
   // ── CRUD ──
 
+  /**
+   * 获取指定用户的论文列表
+   * @param userId - 用户 UUID
+   * @returns 论文列表
+   */
   async listPapers(userId: string) {
-    const [dbPapers, state] = [await this.paperRepo.find({ where: { userId } }), new StateManager(this.projectRoot)];
-    const filePapers = await state.listPapers().catch(() => []);
-    // Merge DB metadata with file-based paper records
-    return filePapers.map((fp) => {
-      const db = dbPapers.find((p) => p.id === fp.id);
-      return { ...fp, status: db?.status ?? "draft", currentWordCount: db?.currentWordCount ?? 0 };
-    });
+    const dbPapers = await this.paperRepo.find({ where: { userId } });
+    return dbPapers.map((p) => ({
+      id: p.id,
+      title: p.title,
+      major: p.major,
+      degreeLevel: p.degreeLevel,
+      language: p.language,
+      status: p.status,
+      currentWordCount: p.currentWordCount,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
   }
 
+  /**
+   * 创建新论文
+   * 同时写入 MySQL 和文件系统（供流水线使用）
+   * @param userId - 创建者 UUID
+   * @param dto - 论文配置
+   * @returns 创建的论文配置对象
+   */
   async createPaper(userId: string, dto: {
     title: string; major: string; degreeLevel?: string; proposalText?: string;
     references?: Array<Record<string, unknown>>; targetWordCount?: number;
     citationFormat?: string; language?: string;
   }) {
-    const { derivePaperIdFromTitle } = await import("@actalk/inkos-core");
     const paperId = derivePaperIdFromTitle(dto.title.trim());
     const now = new Date().toISOString();
 
+    // 写入文件系统（供 PaperRunner 流水线使用）
     const state = new StateManager(this.projectRoot);
     const paperConfig: PaperConfig = {
       id: paperId,
@@ -78,14 +114,16 @@ export class PaperService {
       createdAt: now,
       updatedAt: now,
     };
-
     await state.createPaper(paperConfig);
 
-    // Track in DB
+    // 写入 MySQL（主存储）
     const paper = this.paperRepo.create({
       id: paperId, userId, title: dto.title.trim(),
       major: dto.major.trim(), degreeLevel: dto.degreeLevel,
       language: dto.language === "en" ? "en" : "zh",
+      targetWordCount: dto.targetWordCount ?? 20000,
+      citationFormat: dto.citationFormat ?? "gb7714",
+      proposalText: dto.proposalText,
     });
     await this.paperRepo.save(paper);
     await this.userService.incrementPapersCreated(userId);
@@ -94,51 +132,88 @@ export class PaperService {
     return paperConfig;
   }
 
+  /**
+   * 获取单篇论文详情
+   * @param paperId - 论文 ID
+   * @throws NotFoundException - 论文不存在时抛出 404
+   */
   async getPaper(paperId: string) {
-    const state = new StateManager(this.projectRoot);
-    const paper = await state.loadPaperConfig(paperId).catch(() => null);
+    const paper = await this.paperRepo.findOne({ where: { id: paperId } });
     if (!paper) throw new NotFoundException(`Paper "${paperId}" not found`);
-    return paper;
+    return {
+      id: paper.id,
+      title: paper.title,
+      major: paper.major,
+      degreeLevel: paper.degreeLevel,
+      language: paper.language,
+      status: paper.status,
+      currentWordCount: paper.currentWordCount,
+      targetWordCount: paper.targetWordCount,
+      citationFormat: paper.citationFormat,
+      proposalText: paper.proposalText,
+      createdAt: paper.createdAt,
+      updatedAt: paper.updatedAt,
+    };
   }
 
+  /**
+   * 删除论文
+   * 同时删除 MySQL 和文件系统中的数据
+   * @param userId - 操作者 UUID（用于权限校验）
+   * @param paperId - 论文 ID
+   */
   async deletePaper(userId: string, paperId: string) {
-    const state = new StateManager(this.projectRoot);
-    await state.deletePaper(paperId).catch(() => { throw new NotFoundException(`Paper "${paperId}" not found`); });
+    // 删除 MySQL 数据
     await Promise.all([
       this.paperRepo.delete({ id: paperId, userId }),
       this.db.deleteAll(paperId),
     ]);
+    // 删除文件系统（供流水线使用的目录）
+    const { rm } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    await rm(join(this.projectRoot, "papers", paperId), { recursive: true, force: true }).catch(() => {});
     return { ok: true };
   }
 
+  /**
+   * 更新论文元数据
+   * @param paperId - 论文 ID
+   * @param dto - 要更新的字段
+   */
   async updatePaper(paperId: string, dto: Record<string, unknown>) {
-    const state = new StateManager(this.projectRoot);
-    const paper = await state.loadPaperConfig(paperId).catch(() => null);
+    const paper = await this.paperRepo.findOne({ where: { id: paperId } });
     if (!paper) throw new NotFoundException(`Paper "${paperId}" not found`);
-    const updates: Record<string, unknown> = {};
-    if (typeof dto.title === "string") updates.title = dto.title;
-    if (typeof dto.major === "string") updates.major = dto.major;
-    if (typeof dto.degreeLevel === "string") updates.degreeLevel = dto.degreeLevel;
-    if (typeof dto.proposalText === "string") updates.proposalText = dto.proposalText;
-    if (typeof dto.targetWordCount === "number") updates.targetWordCount = dto.targetWordCount;
-    if (typeof dto.citationFormat === "string") updates.citationFormat = dto.citationFormat;
-    if (typeof dto.language === "string") updates.language = dto.language;
-    const updated = { ...paper, ...updates, id: paperId, updatedAt: new Date().toISOString() } as PaperConfig;
-    await state.savePaperConfig(updated);
-    return updated;
+    if (typeof dto.title === "string") paper.title = dto.title;
+    if (typeof dto.major === "string") paper.major = dto.major;
+    if (typeof dto.degreeLevel === "string") paper.degreeLevel = dto.degreeLevel as any;
+    if (typeof dto.language === "string") paper.language = dto.language as any;
+    if (typeof dto.targetWordCount === "number") paper.targetWordCount = dto.targetWordCount;
+    if (typeof dto.citationFormat === "string") paper.citationFormat = dto.citationFormat;
+    if (typeof dto.proposalText === "string") paper.proposalText = dto.proposalText;
+    await this.paperRepo.save(paper);
+    return paper;
   }
 
   // ── Pipeline ──
 
+  /**
+   * 获取流水线状态
+   * @param paperId - 论文 ID
+   * @returns 流水线状态对象
+   */
   async getPipelineStatus(paperId: string) {
-    const state = new StateManager(this.projectRoot);
-    return state.loadPipelineState(paperId).catch(() => ({ stage: "idle" }));
+    return this.db.loadPipelineState(paperId) ?? { stage: "idle" };
   }
 
+  /**
+   * 重置流水线状态
+   * 清空 MySQL 和文件系统中的流水线数据
+   * @param paperId - 论文 ID
+   */
   async resetPipeline(paperId: string) {
-    // Clear DB
+    // 清空 MySQL
     await this.db.savePipelineState(paperId, { status: "idle", currentStage: "idle", completedStages: [], events: [] });
-    // Clear filesystem
+    // 清空文件系统（PaperRunner 写入的文件）
     const { unlink, readdir } = await import("node:fs/promises");
     const { join } = await import("node:path");
     const base = join(this.projectRoot, "papers", paperId);
@@ -152,6 +227,10 @@ export class PaperService {
     return { ok: true, paperId };
   }
 
+  /**
+   * 启动完整流水线（选题 → 文献 → 大纲 → 写作 → 润色）
+   * 异步执行，通过 SSE 事件通知进度
+   */
   async runPipeline(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     runner.run(options).then(
@@ -161,6 +240,7 @@ export class PaperService {
     return { status: "started", paperId };
   }
 
+  /** 仅运行选题构思阶段 */
   async runBrainstorm(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     runner.runBrainstormOnly(options).then(
@@ -170,6 +250,7 @@ export class PaperService {
     return { status: "started", paperId, stage: "brainstorm" };
   }
 
+  /** 仅运行文献检索阶段 */
   async runLiteratureSearch(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     runner.runLiteratureSearchOnly(options).then(
@@ -179,6 +260,7 @@ export class PaperService {
     return { status: "started", paperId, stage: "literature-search" };
   }
 
+  /** 仅运行大纲生成阶段 */
   async runOutline(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     runner.runOutlineOnly(options).then(
@@ -188,6 +270,7 @@ export class PaperService {
     return { status: "started", paperId, stage: "outline" };
   }
 
+  /** 仅运行正文撰写阶段，完成后自动同步到 MySQL */
   async runWriting(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     runner.runWritingOnly(options).then(
@@ -200,6 +283,7 @@ export class PaperService {
     return { status: "started", paperId, stage: "writing" };
   }
 
+  /** 仅运行润色降重阶段，完成后自动同步到 MySQL */
   async runPolish(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     runner.runPolishOnly(options).then(
@@ -212,24 +296,27 @@ export class PaperService {
     return { status: "started", paperId, stage: "polish" };
   }
 
+  /** 运行全章节 AI 检测 */
   async runDetection(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
-    const result = await runner.runDetectionAll(options);
-    return result;
+    return runner.runDetectionAll(options);
   }
 
+  /** 运行全章节 AI 降重 */
   async runReduction(paperId: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
-    const result = await runner.runReduceAll(options);
-    return result;
+    return runner.runReduceAll(options);
   }
 
+  /**
+   * 重新生成指定章节
+   * 完成后自动从文件系统同步到 MySQL
+   */
   async regenerateSection(paperId: string, sectionNum: string, userId: string) {
     const { runner, options } = await this.buildRunner(paperId, userId);
     const state = new StateManager(this.projectRoot);
     runner.regenerateSection(paperId, sectionNum, state).then(
       async (result) => {
-        // Sync regenerated section from filesystem to MySQL
         try {
           const section = await state.loadSection(paperId, sectionNum);
           if (section) {
@@ -252,101 +339,78 @@ export class PaperService {
 
   // ── Sections ──
 
+  /** 获取论文章节列表（从 MySQL） */
   async listSections(paperId: string) {
-    // MySQL first
-    const dbSections = await this.db.listSections(paperId);
-    if (dbSections.length > 0) return dbSections;
-    // Filesystem fallback
-    const state = new StateManager(this.projectRoot);
-    return state.listSections(paperId);
+    return this.db.listSections(paperId);
   }
 
+  /** 获取单个章节内容（从 MySQL） */
   async getSection(paperId: string, num: string) {
-    // MySQL first
-    let section = await this.db.loadSection(paperId, num);
-    if (section) return section;
-    // Filesystem fallback
-    const state = new StateManager(this.projectRoot);
-    section = await state.loadSection(paperId, num).catch(() => null) as any;
+    const section = await this.db.loadSection(paperId, num);
     if (!section) throw new NotFoundException(`Section ${num} not found in paper "${paperId}"`);
     return section;
   }
 
+  /** 保存章节内容（仅写入 MySQL） */
   async saveSection(paperId: string, num: string, body: { content: string }) {
-    // MySQL
     await this.db.saveSection(paperId, {
       sectionNumber: num,
       content: body.content,
       wordCount: body.content.length,
       status: "drafted",
     });
-    // Filesystem (backward compat)
-    try {
-      const state = new StateManager(this.projectRoot);
-      const existing = await state.loadSection(paperId, num).catch(() => null);
-      const section = existing
-        ? { ...existing, content: body.content, wordCount: body.content.length }
-        : { sectionNumber: num, title: `Section ${num}`, content: body.content, wordCount: body.content.length, status: "drafted" as const };
-      await state.saveSection(paperId, section as any);
-    } catch { /* filesystem write failed, DB is primary */ }
     return { ok: true };
   }
 
   // ── Outline ──
 
+  /** 获取论文大纲（从 MySQL） */
   async getOutline(paperId: string) {
-    const dbOutline = await this.db.loadOutline(paperId);
-    if (dbOutline) return dbOutline;
-    const state = new StateManager(this.projectRoot);
-    return state.loadOutline(paperId).catch(() => []);
+    return this.db.loadOutline(paperId) ?? { title: "", sections: [] };
   }
 
+  /** 保存论文大纲（仅写入 MySQL） */
   async saveOutline(paperId: string, outline: any) {
     await this.db.saveOutline(paperId, outline.title || "", outline.sections || outline);
-    try {
-      const state = new StateManager(this.projectRoot);
-      await state.saveOutline(paperId, outline as never);
-    } catch { /* */ }
     return { ok: true };
   }
 
   // ── References ──
 
+  /** 获取参考文献列表（从 MySQL） */
   async listReferences(paperId: string) {
-    const dbRefs = await this.db.loadReferences(paperId);
-    if (dbRefs.length > 0) return dbRefs;
-    const state = new StateManager(this.projectRoot);
-    return state.loadReferences(paperId).catch(() => [] as Reference[]);
+    return this.db.loadReferences(paperId);
   }
 
+  /** 添加参考文献（仅写入 MySQL） */
   async addReference(paperId: string, ref: Reference) {
     const refs = await this.listReferences(paperId);
     refs.push(ref as any);
     await this.db.saveReferences(paperId, refs);
-    try { const state = new StateManager(this.projectRoot); await state.saveReferences(paperId, refs as any); } catch { /* */ }
     return ref;
   }
 
+  /** 更新参考文献（仅写入 MySQL） */
   async updateReference(paperId: string, refId: string, ref: Reference) {
     const refs = await this.listReferences(paperId);
     const idx = refs.findIndex((r: any) => r.id === refId);
     if (idx === -1) throw new NotFoundException(`Reference "${refId}" not found`);
     refs[idx] = ref as any;
     await this.db.saveReferences(paperId, refs);
-    try { const state = new StateManager(this.projectRoot); await state.saveReferences(paperId, refs as any); } catch { /* */ }
     return ref;
   }
 
+  /** 删除参考文献（仅从 MySQL 删除） */
   async deleteReference(paperId: string, refId: string) {
     const refs = await this.listReferences(paperId);
     const filtered = refs.filter((r: any) => r.id !== refId);
     await this.db.saveReferences(paperId, filtered);
-    try { const state = new StateManager(this.projectRoot); await state.saveReferences(paperId, filtered as any); } catch { /* */ }
     return { ok: true };
   }
 
   // ── Detection Stats ──
 
+  /** 获取 AI 检测统计（暂从文件系统读取，后续可迁移到 MySQL） */
   async getDetectionStats(paperId: string) {
     const state = new StateManager(this.projectRoot);
     return state.loadAIDetectionLog(paperId).catch(() => []);
@@ -354,31 +418,44 @@ export class PaperService {
 
   // ── Innovations ──
 
+  /** 获取创新点列表（从 MySQL） */
   async getInnovations(paperId: string) {
-    const dbInnovs = await this.db.loadInnovations(paperId);
-    if (dbInnovs.length > 0) return dbInnovs;
-    const state = new StateManager(this.projectRoot);
-    return state.loadInnovationPoints(paperId).catch(() => []);
+    return this.db.loadInnovations(paperId);
   }
 
+  /** 更新创新点（仅写入 MySQL） */
   async updateInnovation(paperId: string, pointId: string, data: Record<string, unknown>) {
     const points = await this.getInnovations(paperId);
     const idx = points.findIndex((p: any) => p.id === pointId);
     if (idx === -1) throw new NotFoundException(`Innovation point "${pointId}" not found`);
     points[idx] = { ...points[idx], ...data };
     await this.db.saveInnovations(paperId, points);
-    try { const state = new StateManager(this.projectRoot); await state.saveInnovationPoints(paperId, points as any); } catch { /* */ }
     return points[idx];
   }
 
   // ── Export ──
 
+  /**
+   * 导出论文为 Word 文档
+   * 从 MySQL 读取数据，传给 WordExporter
+   * @param paperId - 论文 ID
+   * @param format - 导出格式（目前支持 docx）
+   * @returns 导出文件路径
+   */
   async exportPaper(paperId: string, format: string) {
-    const state = new StateManager(this.projectRoot);
-    const paper = await state.loadPaperConfig(paperId);
-    const sections = await state.listSections(paperId);
-    const outline = await state.loadOutline(paperId).catch(() => []);
-    const references = await state.loadReferences(paperId);
+    // 从 MySQL 读取论文数据
+    const paper = await this.paperRepo.findOne({ where: { id: paperId } });
+    if (!paper) throw new NotFoundException(`Paper "${paperId}" not found`);
+
+    const sections = await this.db.listSections(paperId);
+    const outlineData = await this.db.loadOutline(paperId);
+    const dbRefs = await this.db.loadReferences(paperId);
+
+    // 转换参考文献类型以匹配 WordExporter 期望
+    const references = dbRefs.map((r) => ({
+      ...r,
+      type: (r.type as Reference["type"]) ?? "other",
+    }));
 
     const exporter = new WordExporter();
     const { join } = await import("node:path");
@@ -386,11 +463,11 @@ export class PaperService {
       paperId,
       title: paper.title,
       major: paper.major,
-      language: paper.language,
-      citationFormat: paper.citationFormat,
-      sections,
-      outline: outline as never,
-      references,
+      language: paper.language as "zh" | "en",
+      citationFormat: ((paper as any).citationFormat ?? "gb7714") as PaperConfig["citationFormat"],
+      sections: sections as any,
+      outline: (outlineData?.sections ?? []) as never,
+      references: references as any,
       outputDir: join(this.projectRoot, "papers", paperId, "exports"),
     });
     return { filePath: result.filePath };
@@ -398,15 +475,18 @@ export class PaperService {
 
   // ── Runtime status ──
 
+  /** 获取运行时流水线状态（从 MySQL） */
   async getRuntimeStatus(paperId: string) {
-    const dbState = await this.db.loadPipelineState(paperId);
-    if (dbState) return dbState;
-    const state = new StateManager(this.projectRoot);
-    return state.loadPipelineState(paperId).catch(() => ({ status: "idle" }));
+    return this.db.loadPipelineState(paperId) ?? { status: "idle" };
   }
 
   // ── Internal helpers ──
 
+  /**
+   * 从文件系统同步章节到 MySQL
+   * 流水线完成后调用，确保 MySQL 中有最新的章节数据
+   * PaperRunner 写文件系统，此方法将结果同步到 MySQL
+   */
   private async syncSectionsFromFilesystem(paperId: string) {
     try {
       const state = new StateManager(this.projectRoot);
@@ -424,6 +504,10 @@ export class PaperService {
     } catch { /* best-effort */ }
   }
 
+  /**
+   * 构建 PaperRunner 实例
+   * PaperRunner 需要 StateManager 来写文件系统
+   */
   private async buildRunner(paperId: string, _userId: string) {
     const config = await this.loadLLMConfig();
     const ctx: AgentContext = {
@@ -449,6 +533,9 @@ export class PaperService {
     return { runner, options };
   }
 
+  /**
+   * 加载 LLM 配置
+   */
   private async loadLLMConfig() {
     const { loadProjectConfig } = await import("@actalk/inkos-core");
     return loadProjectConfig(this.projectRoot, { consumer: "studio" });

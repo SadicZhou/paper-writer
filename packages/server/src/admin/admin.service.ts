@@ -1,23 +1,27 @@
 import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, Between, MoreThanOrEqual } from "typeorm";
+import { Repository, MoreThanOrEqual } from "typeorm";
 import bcrypt from "bcryptjs";
 import { User } from "../entities/user.entity.js";
 import { UsageRecord } from "../entities/usage-record.entity.js";
 import { Paper } from "../entities/paper.entity.js";
-import { StateManager } from "@actalk/inkos-core";
 
+/**
+ * AdminService — 管理后台业务逻辑层
+ *
+ * 职责：
+ * 1. 用户管理（CRUD、配额调整）
+ * 2. 系统统计（用户数、论文数、Token 用量）
+ * 3. 全局论文列表（跨用户）
+ * 4. 使用趋势分析
+ *
+ * 数据策略：MySQL 为唯一数据源
+ *
+ * @author zjh
+ * @date 2026-06-02
+ */
 @Injectable()
 export class AdminService {
-  private projectRoot = process.env.INKOS_PROJECT_ROOT ?? process.cwd();
-
-  private async loadAllFilePapers() {
-    try {
-      const state = new StateManager(this.projectRoot);
-      return await state.listPapers();
-    } catch { return []; }
-  }
-
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(UsageRecord) private usageRepo: Repository<UsageRecord>,
@@ -26,6 +30,12 @@ export class AdminService {
 
   // ── User management ──
 
+  /**
+   * 分页查询用户列表
+   * @param page - 页码（从 1 开始）
+   * @param limit - 每页数量
+   * @returns 用户列表、总数、分页信息
+   */
   async listUsers(page = 1, limit = 20) {
     const [users, total] = await this.userRepo.findAndCount({
       skip: (page - 1) * limit,
@@ -36,6 +46,11 @@ export class AdminService {
     return { users, total, page, limit };
   }
 
+  /**
+   * 创建新用户
+   * @param dto - 用户信息（用户名、密码、角色等）
+   * @throws ConflictException - 用户名已存在时抛出 409
+   */
   async createUser(dto: { username: string; password: string; role?: string; displayName?: string; email?: string; maxPapers?: number; maxTokens?: number; expiresAt?: string }) {
     const existing = await this.userRepo.findOne({ where: { username: dto.username } });
     if (existing) throw new ConflictException("Username already exists");
@@ -55,6 +70,12 @@ export class AdminService {
     return { id: user.id, username: user.username, role: user.role };
   }
 
+  /**
+   * 更新用户信息
+   * @param id - 用户 UUID
+   * @param dto - 要更新的字段（角色、状态、配额等）
+   * @throws NotFoundException - 用户不存在时抛出 404
+   */
   async updateUser(id: string, dto: { role?: string; isActive?: boolean; maxPapers?: number; maxTokens?: number; expiresAt?: string | null; displayName?: string }) {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException("User not found");
@@ -70,6 +91,11 @@ export class AdminService {
     return { id: user.id, username: user.username, role: user.role };
   }
 
+  /**
+   * 获取用户使用情况
+   * @param userId - 用户 UUID
+   * @returns 用户配额信息和最近使用记录
+   */
   async getUserUsage(userId: string) {
     const user = await this.userRepo.findOne({ where: { id: userId }, select: ["id", "username", "tokensUsed", "maxTokens", "papersCreated", "maxPapers"] });
     if (!user) throw new NotFoundException("User not found");
@@ -85,12 +111,14 @@ export class AdminService {
 
   // ── Dashboard stats ──
 
+  /**
+   * 获取系统统计数据
+   * @returns 用户总数、活跃用户数、论文总数、今日新增论文、Token 总用量
+   */
   async getStats() {
     const totalUsers = await this.userRepo.count();
     const activeUsers = await this.userRepo.count({ where: { isActive: true } });
-    const dbPapers = await this.paperRepo.count();
-    const filePapers = await this.loadAllFilePapers();
-    const totalPapers = Math.max(dbPapers, filePapers.length);
+    const totalPapers = await this.paperRepo.count();
 
     const { totalTokens } = await this.usageRepo
       .createQueryBuilder("u")
@@ -98,7 +126,6 @@ export class AdminService {
       .getRawOne<{ totalTokens: string }>()
       .then((r) => ({ totalTokens: parseInt(r?.totalTokens ?? "0", 10) }));
 
-    // Papers created today
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const papersToday = await this.paperRepo.count({ where: { createdAt: MoreThanOrEqual(todayStart) } });
@@ -108,45 +135,44 @@ export class AdminService {
 
   // ── All papers ──
 
+  /**
+   * 获取全局论文列表（跨用户）
+   * @param page - 页码
+   * @param limit - 每页数量
+   * @returns 论文列表、总数、分页信息
+   */
   async listAllPapers(page = 1, limit = 20) {
-    const [dbPapers, dbTotal] = await this.paperRepo.findAndCount({
+    const [dbPapers, total] = await this.paperRepo.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: "DESC" },
       relations: ["user"],
     });
 
-    // 合并文件系统中的论文（旧数据可能不在 MySQL 中）
-    const filePapers = await this.loadAllFilePapers();
-    const dbIds = new Set(dbPapers.map((p) => p.id));
-    const orphanPapers = filePapers.filter((fp) => !dbIds.has(fp.id));
+    const papers = dbPapers.map((p) => ({
+      id: p.id,
+      title: p.title,
+      major: p.major,
+      degreeLevel: p.degreeLevel,
+      language: p.language,
+      status: p.status,
+      currentWordCount: p.currentWordCount,
+      username: p.user?.username ?? "unknown",
+      userId: p.userId,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
 
-    const merged = [
-      ...orphanPapers.map((fp) => ({
-        id: fp.id, title: fp.title, major: fp.major, degreeLevel: fp.degreeLevel,
-        language: (fp as any).language ?? "zh", status: "draft" as const,
-        currentWordCount: (fp as any).currentWordCount ?? 0,
-        username: "unknown", userId: "",
-        createdAt: (fp as any).createdAt ?? new Date().toISOString(),
-        updatedAt: (fp as any).updatedAt ?? new Date().toISOString(),
-      })),
-      ...dbPapers.map((p) => ({
-        id: p.id, title: p.title, major: p.major, degreeLevel: p.degreeLevel,
-        language: p.language, status: p.status, currentWordCount: p.currentWordCount,
-        username: p.user?.username, userId: p.userId,
-        createdAt: p.createdAt, updatedAt: p.updatedAt,
-      })),
-    ];
-
-    return {
-      papers: merged.slice(0, limit),
-      total: dbTotal + orphanPapers.length,
-      page, limit,
-    };
+    return { papers, total, page, limit };
   }
 
   // ── Usage trends ──
 
+  /**
+   * 获取 Token 使用趋势
+   * @param days - 统计天数（默认 30 天）
+   * @returns 按 Agent 分组的 Token 用量、总 Token 数、总调用次数
+   */
   async getUsageTrends(days = 30) {
     const since = new Date();
     since.setDate(since.getDate() - days);
@@ -156,7 +182,6 @@ export class AdminService {
       order: { createdAt: "DESC" },
     });
 
-    // Aggregate by agent
     const byAgent: Record<string, { promptTokens: number; completionTokens: number; totalTokens: number; calls: number }> = {};
     for (const r of records) {
       if (!byAgent[r.agentName]) byAgent[r.agentName] = { promptTokens: 0, completionTokens: 0, totalTokens: 0, calls: 0 };

@@ -21,7 +21,7 @@ export function createProgram(hooks: ProgramHooks = {}): Command {
 
   program
     .name("inkos")
-    .description("InkOS — AI academic paper writing system")
+    .description("Paper Writer — AI 学术论文写作系统")
     .version(version)
     .enablePositionalOptions()
     .option("--service <service>", "Override LLM service for this CLI run")

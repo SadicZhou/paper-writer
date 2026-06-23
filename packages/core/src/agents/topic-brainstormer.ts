@@ -1,28 +1,43 @@
+/**
+ * 论文选题头脑风暴 Agent
+ * 基于专业方向、学位层次与开题报告，通过 LLM 两阶段对话（发散→收敛）生成候选选题；
+ * 也支持在标题已定时单独挖掘创新点。
+ * @author zjh
+ */
 import { BaseAgent } from "./base.js";
 import type { InnovationPoint } from "../models/paper-state.js";
 import { InnovationPointSchema } from "../models/paper-state.js";
 import { z } from "zod";
 
+/** 选题头脑风暴的输入参数 */
 export interface BrainstormInput {
+  /** 专业方向，如「计算机科学」 */
   readonly major: string;
+  /** 学位层次：本科 / 硕士 / 博士 */
   readonly degreeLevel: "undergraduate" | "master" | "doctor";
+  /** 开题报告或研究素材全文 */
   readonly proposalText: string;
+  /** 输出语言：中文或英文 */
   readonly language: "zh" | "en";
 }
 
+/** 选题头脑风暴的结构化输出 */
 export interface BrainstormOutput {
+  /** 3–5 个候选选题，每个含创新点、可行性分析与文献方向 */
   readonly topics: ReadonlyArray<{
     readonly title: string;
     readonly innovationPoints: InnovationPoint[];
     readonly feasibility: string;
     readonly referenceDirections: string[];
   }>;
+  /** 推荐采用的选题标题（须与 topics 中某一项 title 一致） */
   readonly recommendedTopic: string;
+  /** 推荐理由说明 */
   readonly reasoning: string;
 }
 
-const TopicsResponseSchema = z.object({
-  topics: z.array(z.object({
+/** LLM 收敛阶段返回 JSON 的 Zod 校验 schema */
+const TopicsResponseSchema = z.object({  topics: z.array(z.object({
     title: z.string().min(1),
     innovationPoints: z.array(InnovationPointSchema),
     feasibility: z.string(),
@@ -32,7 +47,9 @@ const TopicsResponseSchema = z.object({
   reasoning: z.string(),
 });
 
+/** 固定标题下挖掘创新点的输入参数（不进行选题头脑风暴） */
 export interface ExtractInnovationsInput {
+  /** 已确定的论文标题 */
   readonly topic: string;
   readonly major: string;
   readonly degreeLevel: "undergraduate" | "master" | "doctor";
@@ -40,18 +57,28 @@ export interface ExtractInnovationsInput {
   readonly language: "zh" | "en";
 }
 
+/** 创新点提取结果 JSON 的 Zod 校验 schema */
 const InnovationsExtractionSchema = z.object({
   innovationPoints: z.array(InnovationPointSchema),
 });
 
+/**
+ * 论文选题与创新点挖掘 Agent
+ * 继承 BaseAgent，通过 chat() 调用 LLM；支持中英文双语 prompt。
+ */
 export class TopicBrainstormer extends BaseAgent {
+  /** Agent 标识名，用于日志与 pipeline 路由 */
   get name(): string {
     return "topic-brainstormer";
   }
 
-  /** Extract innovation points for a fixed topic (no topic brainstorming). */
-  async extractInnovationsForTopic(input: ExtractInnovationsInput): Promise<InnovationPoint[]> {
-    const isZh = input.language === "zh";
+  /**
+   * 在论文标题已确定时，仅从开题报告中挖掘创新点（跳过选题头脑风暴）。
+   * 单次 LLM 调用，temperature=0.4；解析失败时返回空数组而非抛错。
+   * @param input 标题、专业、学位、开题报告与语言
+   * @returns 创新点列表，每项含 id、description、novelty
+   */
+  async extractInnovationsForTopic(input: ExtractInnovationsInput): Promise<InnovationPoint[]> {    const isZh = input.language === "zh";
 
     const systemPrompt = isZh
       ? `你是一位资深学术导师，专攻学术论文创新点挖掘。
@@ -106,8 +133,14 @@ Do NOT generate new topic titles — the title is fixed.`;
     }
   }
 
-  async brainstorm(input: BrainstormInput): Promise<BrainstormOutput> {
-    const isZh = input.language === "zh";
+  /**
+   * 两阶段选题头脑风暴：先发散生成大量想法，再收敛精选 3–5 个可行选题。
+   * Phase 1（temperature=0.8）发散；Phase 2（temperature=0.4）收敛并输出严格 JSON。
+   * @param input 专业、学位、开题报告与语言
+   * @returns 候选选题、推荐选题及推荐理由
+   * @throws 收敛阶段 JSON 不符合 schema 时抛出带字段详情的错误
+   */
+  async brainstorm(input: BrainstormInput): Promise<BrainstormOutput> {    const isZh = input.language === "zh";
 
     const systemPrompt = isZh
       ? this.chineseSystemPrompt()
@@ -141,8 +174,11 @@ Do NOT generate new topic titles — the title is fixed.`;
     return this.parseOutput(convergeResp.content, isZh);
   }
 
-  private parseOutput(raw: string, isZh: boolean): BrainstormOutput {
-    const json = this.extractJson(raw);
+  /**
+   * 从 LLM 原始文本中提取 JSON 并用 TopicsResponseSchema 校验。
+   * 校验失败时记录日志并抛出可读错误信息。
+   */
+  private parseOutput(raw: string, isZh: boolean): BrainstormOutput {    const json = this.extractJson(raw);
     try {
       return TopicsResponseSchema.parse(json);
     } catch (e) {
@@ -160,16 +196,16 @@ Do NOT generate new topic titles — the title is fixed.`;
     }
   }
 
-  private extractJson(raw: string): unknown {
-    const cleaned = raw
+  /** 剥离 markdown 代码块标记后解析 JSON */
+  private extractJson(raw: string): unknown {    const cleaned = raw
       .replace(/```json\s*/gi, "")
       .replace(/```\s*/g, "")
       .trim();
     return JSON.parse(cleaned);
   }
 
-  private chineseJsonFormatHint(): string {
-    return `## 必须严格遵守的 JSON 格式（不要省略任何字段）
+  /** 中文收敛阶段的 JSON 输出格式说明（嵌入 user prompt） */
+  private chineseJsonFormatHint(): string {    return `## 必须严格遵守的 JSON 格式（不要省略任何字段）
 \`\`\`json
 {
   "topics": [
@@ -197,8 +233,8 @@ Do NOT generate new topic titles — the title is fixed.`;
 - referenceDirections 必须是字符串数组，至少提供 1-2 个方向`;
   }
 
-  private englishJsonFormatHint(): string {
-    return `## REQUIRED JSON format (do not omit any fields)
+  /** 英文收敛阶段的 JSON 输出格式说明 */
+  private englishJsonFormatHint(): string {    return `## REQUIRED JSON format (do not omit any fields)
 \`\`\`json
 {
   "topics": [
@@ -226,8 +262,8 @@ Important:
 - referenceDirections MUST be an array of strings, at least 1-2 items`;
   }
 
-  private chineseSystemPrompt(): string {
-    return `你是一位资深学术导师，专攻学术论文选题与创新点挖掘。
+  /** 中文系统 prompt：角色设定、五维创新挖掘框架与输出要求 */
+  private chineseSystemPrompt(): string {    return `你是一位资深学术导师，专攻学术论文选题与创新点挖掘。
 
 ## 你的任务
 基于学生的专业方向、开题报告和学位层次，进行头脑风暴，挖掘有价值的论文选题和创新点。
@@ -244,8 +280,8 @@ Important:
 每个 topic 必须包含 title、innovationPoints（数组，每个元素含 id/description/novelty）、feasibility（字符串）、referenceDirections（字符串数组）。`;
   }
 
-  private chineseUserMessage(input: BrainstormInput): string {
-    return `## 专业方向
+  /** 组装中文用户消息：专业、学位、开题报告 */
+  private chineseUserMessage(input: BrainstormInput): string {    return `## 专业方向
 ${input.major}
 
 ## 学位层次
@@ -257,8 +293,8 @@ ${input.proposalText || "（未提供）"}
 请基于以上信息进行选题头脑风暴。`;
   }
 
-  private englishSystemPrompt(): string {
-    return `You are a senior academic advisor specializing in thesis topic selection and innovation point mining.
+  /** 英文系统 prompt，结构与中文版对应 */
+  private englishSystemPrompt(): string {    return `You are a senior academic advisor specializing in thesis topic selection and innovation point mining.
 
 ## Your Task
 Based on the student's major, proposal, and degree level, brainstorm valuable paper topics and innovation points.
@@ -275,8 +311,8 @@ Strict JSON format with topics array, recommendedTopic, and reasoning.
 Each topic MUST include title, innovationPoints (array with id/description/novelty per item), feasibility (string), referenceDirections (string array).`;
   }
 
-  private englishUserMessage(input: BrainstormInput): string {
-    const degreeLabels: Record<string, string> = {
+  /** 组装英文用户消息 */
+  private englishUserMessage(input: BrainstormInput): string {    const degreeLabels: Record<string, string> = {
       undergraduate: "Undergraduate",
       master: "Master's",
       doctor: "Doctoral",

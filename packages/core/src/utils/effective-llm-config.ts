@@ -107,7 +107,7 @@ export async function resolveEffectiveLLMConfig(
     throw new Error(
       configMode === "studio-project"
         ? "Studio LLM API key not set. Open Studio services and save an API key for the selected service."
-        : "INKOS_LLM_API_KEY not set. Run 'inkos config set-global' or add it to project .env file.",
+        : "未设置 INKOS_LLM_API_KEY。运行 'inkos config set-global' 或在项目 .env 文件中添加。",
     );
   }
 
@@ -128,7 +128,7 @@ async function readProjectConfig(root: string): Promise<Record<string, unknown>>
     await access(configPath);
   } catch {
     throw new Error(
-      `inkos.json not found in ${root}.\nMake sure you are inside an InkOS project directory (cd into the project created by 'inkos init').`,
+      `inkos.json not found in ${root}.\nMake sure you are inside a Paper Writer project directory (cd into the project created by 'inkos init').`,
     );
   }
 

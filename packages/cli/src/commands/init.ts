@@ -5,7 +5,7 @@ import { log, logError } from "../utils.js";
 import { initializeProjectDirectory } from "../project-bootstrap.js";
 
 export const initCommand = new Command("init")
-  .description("Initialize an InkOS project (current directory by default)")
+  .description("初始化 Paper Writer 项目（默认当前目录）")
   .argument("[name]", "Project name (creates subdirectory). Omit to init current directory.")
   .option("--lang <language>", "Default writing language: zh (Chinese) or en (English)", "zh")
   .action(async (name: string | undefined, opts: { lang?: string }) => {

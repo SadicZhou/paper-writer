@@ -39,6 +39,18 @@ export class Paper {
   @Column({ length: 32, default: "draft" })
   status!: string;
 
+  /** 目标字数 */
+  @Column({ default: 20000 })
+  targetWordCount!: number;
+
+  /** 引用格式（gb7714, apa, mla 等） */
+  @Column({ length: 32, default: "gb7714" })
+  citationFormat!: string;
+
+  /** 开题报告文本 */
+  @Column({ type: "text", nullable: true })
+  proposalText?: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 

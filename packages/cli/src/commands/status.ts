@@ -20,7 +20,7 @@ export const statusCommand = new Command("status")
         return;
       }
 
-      log(`InkOS Project: ${root}`);
+      log(`Paper Writer 项目：${root}`);
       log(`Papers: ${papers.length}`);
       log("");
 

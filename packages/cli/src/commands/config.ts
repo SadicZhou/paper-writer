@@ -98,7 +98,7 @@ configCommand
       await mkdir(GLOBAL_CONFIG_DIR, { recursive: true });
 
       const lines = [
-        "# InkOS Global LLM Configuration",
+        "# Paper Writer 全局 LLM 配置",
         `INKOS_LLM_PROVIDER=${opts.provider}`,
         `INKOS_LLM_BASE_URL=${opts.baseUrl}`,
         `INKOS_LLM_API_KEY=${opts.apiKey}`,
