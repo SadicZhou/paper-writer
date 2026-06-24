@@ -7,3 +7,4 @@
 - [SSE Events](sse-events.md) — real-time event pipeline, EventEmitter2 wildcard bug, token refresh
 - [Common Bugs](common-bugs.md) — frequently encountered bugs and their fixes (SSE, export, services, bcrypt, etc.)
 - [Deployment](deployment.md) — Docker, Nginx, PM2, env vars, startup commands
+- [Windows Dev Setup](windows-dev-setup.md) — Windows 本地开发环境要点（vite 代理、tsc watch、Docker 端口）

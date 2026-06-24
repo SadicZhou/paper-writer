@@ -8,9 +8,9 @@ As of 2026-06-01, the project has been significantly restructured:
 
 **New backend**: NestJS server (`packages/server/`) with MySQL + Redis + TypeORM + JWT auth. Replaces the old Hono server for multi-user scenarios.
 
-**Frontend split**: Studio (`packages/studio/`) for paper writing, Admin Panel (`packages/admin-panel/`) for user management. InkOS branding removed, replaced with "Paper Writer".
+**Frontend split**: Studio (`packages/studio/`) for paper writing, Admin Panel (`packages/admin-panel/`) for user management. 品牌名 Paper Writer（原 InkOS），CLI 输出已全部中文化。
 
-**Data migration**: Paper content migrating from filesystem-only to MySQL + filesystem dual-write. DB tables: `paper_sections`, `paper_outlines`, `paper_references`, `paper_innovations`, `pipeline_states`.
+**Data strategy**: MySQL 为唯一数据源，文件系统仅用于 PaperRunner 流水线运行时。读/写均走 MySQL，流水线完成后自动 sync 到 MySQL。详见 [[paper-persistence]]。
 
 **Service configs**: LLM service configurations moved from `inkos.json` to MySQL `service_configs` table with per-user isolation.
 

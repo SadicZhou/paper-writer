@@ -139,6 +139,11 @@ export class DbStorageService {
     }
   }
 
+  /** 批量加载所有 pipeline_states（用于列表页） */
+  async loadAllPipelineStates() {
+    return this.pipelineRepo.find();
+  }
+
   async loadPipelineState(paperId: string) {
     const row = await this.pipelineRepo.findOne({ where: { paperId } });
     if (!row) return null;

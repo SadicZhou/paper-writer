@@ -58,17 +58,26 @@ export class PaperService {
    */
   async listPapers(userId: string) {
     const dbPapers = await this.paperRepo.find({ where: { userId } });
-    return dbPapers.map((p) => ({
-      id: p.id,
-      title: p.title,
-      major: p.major,
-      degreeLevel: p.degreeLevel,
-      language: p.language,
-      status: p.status,
-      currentWordCount: p.currentWordCount,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    }));
+
+    // 批量加载流水线状态，补充章节/阶段信息
+    const pipelineStates = await this.db.loadAllPipelineStates();
+    const stateMap = new Map(pipelineStates.map((s) => [s.paperId, s]));
+
+    return dbPapers.map((p) => {
+      const ps = stateMap.get(p.id);
+      return {
+        id: p.id,
+        title: p.title,
+        major: p.major ?? "",
+        degreeLevel: p.degreeLevel ?? "undergraduate",
+        totalSections: ps?.totalSections ?? 0,
+        completedSections: ps?.completedSections ?? 0,
+        totalWords: p.currentWordCount ?? 0,
+        pipelineStage: ps?.currentStage ?? p.status ?? "idle",
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      };
+    });
   }
 
   /**
